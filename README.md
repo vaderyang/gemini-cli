@@ -16,6 +16,7 @@ With the Gemini CLI you can:
   Veo or Lyria](https://github.com/GoogleCloudPlatform/vertex-ai-creative-studio/tree/main/experiments/mcp-genmedia)
 - Ground your queries with the [Google Search](https://ai.google.dev/gemini-api/docs/grounding)
   tool, built in to Gemini.
+- **Connect to OpenAI-compatible APIs**, including local LLM servers like Ollama, LM Studio, and vLLM.
 
 ## Quickstart
 
@@ -49,7 +50,27 @@ If you need to use a specific model or require a higher request capacity, you ca
    export GEMINI_API_KEY="YOUR_API_KEY"
    ```
 
-For other authentication methods, including Google Workspace accounts, see the [authentication](./docs/cli/authentication.md) guide.
+For other authentication methods, including Google Workspace accounts and OpenAI-compatible APIs, see the [authentication](./docs/cli/authentication.md) guide.
+
+### Using OpenAI-compatible APIs (New!)
+
+The Gemini CLI now supports OpenAI-compatible APIs, allowing you to use local LLM servers or alternative providers:
+
+1. **For local LLMs (Ollama, LM Studio, vLLM):**
+   ```bash
+   export OPENAI_BASE_URL="http://localhost:11434/v1"  # Example for Ollama
+   gemini
+   ```
+   Then select "OpenAI API" when prompted for authentication.
+
+2. **For cloud providers:**
+   ```bash
+   export OPENAI_API_KEY="your-api-key"
+   export OPENAI_BASE_URL="https://your-provider-api-endpoint/v1"
+   gemini
+   ```
+
+See [OPENAI_INTEGRATION.md](./OPENAI_INTEGRATION.md) for detailed setup instructions.
 
 ## Examples
 
@@ -83,7 +104,7 @@ gemini
 ### Troubleshooting
 
 Head over to the [troubleshooting](docs/troubleshooting.md) guide if you're
-having issues.
+having issues. For OpenAI-specific setup issues, see [OPENAI_INTEGRATION.md](./OPENAI_INTEGRATION.md#troubleshooting).
 
 ## Popular tasks
 

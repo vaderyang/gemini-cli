@@ -1,6 +1,6 @@
 ## Authentication Setup
 
-The Gemini CLI requires you to authenticate with Google's AI services. On initial startup you'll need to configure **one** of the following authentication methods:
+The Gemini CLI requires you to authenticate with an AI service provider. On initial startup you'll need to configure **one** of the following authentication methods:
 
 1.  **Login with Google (Gemini Code Assist):**
     - Use this option to log in with your google account.
@@ -74,3 +74,22 @@ The Gemini CLI requires you to authenticate with Google's AI services. On initia
           echo 'export GOOGLE_GENAI_USE_VERTEXAI=true' >> ~/.bashrc
           source ~/.bashrc
           ```
+
+4.  **OpenAI-compatible APIs:**
+    - Use this option to connect to OpenAI-compatible endpoints, including local LLM servers (Ollama, LM Studio, vLLM) or cloud providers.
+    - Set the `OPENAI_BASE_URL` environment variable to your API endpoint:
+      ```bash
+      export OPENAI_BASE_URL="http://localhost:11434/v1"  # Example for Ollama
+      ```
+    - For cloud providers, also set the `OPENAI_API_KEY`:
+      ```bash
+      export OPENAI_API_KEY="YOUR_API_KEY"
+      export OPENAI_BASE_URL="https://your-provider-api-endpoint/v1"
+      ```
+    - For repeated use, add these to your `.env` file or shell configuration:
+      ```bash
+      echo 'export OPENAI_BASE_URL="http://localhost:11434/v1"' >> ~/.bashrc
+      source ~/.bashrc
+      ```
+    - When running `gemini`, select "OpenAI API" from the authentication menu.
+    - See [OPENAI_INTEGRATION.md](../../OPENAI_INTEGRATION.md) for detailed setup instructions for specific providers.
