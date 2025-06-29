@@ -12,6 +12,7 @@ import {
   createContentGeneratorConfig,
 } from '../core/contentGenerator.js';
 import { ToolRegistry } from '../tools/tool-registry.js';
+import { DEFAULT_OPENAI_MODEL, DEFAULT_OPENAI_EMBEDDING_MODEL } from './models.js';
 import { LSTool } from '../tools/ls.js';
 import { ReadFileTool } from '../tools/read-file.js';
 import { GrepTool } from '../tools/grep.js';
@@ -39,8 +40,8 @@ import {
   StartSessionEvent,
 } from '../telemetry/index.js';
 import {
-  DEFAULT_GEMINI_EMBEDDING_MODEL,
   DEFAULT_GEMINI_FLASH_MODEL,
+  DEFAULT_GEMINI_EMBEDDING_MODEL,
 } from './models.js';
 import { ClearcutLogger } from '../telemetry/clearcut-logger/clearcut-logger.js';
 
@@ -135,7 +136,7 @@ export class Config {
   private toolRegistry!: ToolRegistry;
   private readonly sessionId: string;
   private contentGeneratorConfig!: ContentGeneratorConfig;
-  private readonly embeddingModel: string;
+  private embeddingModel: string;
   private readonly sandbox: SandboxConfig | undefined;
   private readonly targetDir: string;
   private readonly debugMode: boolean;
@@ -229,10 +230,15 @@ export class Config {
   }
 
   async refreshAuth(authMethod: AuthType) {
-    // Always use the original default model when switching auth methods
-    // This ensures users don't stay on Flash after switching between auth types
-    // and allows API key users to get proper fallback behavior from getEffectiveModel
-    const modelToUse = this.model; // Use the original default model
+    // Determine the appropriate default model when switching authentication type
+    // Gemini-auth variants should keep the CLI default (this.model), but other
+    // providers need their own sensible defaults so the UI doesn't still show
+    // a Gemini model after an auth switch.
+    let modelToUse = this.model;
+    if (authMethod === AuthType.USE_OPENAI) {
+      modelToUse = DEFAULT_OPENAI_MODEL;
+    }
+    // In future we could add provider-specific defaults here (e.g. Vertex).
 
     // Temporarily clear contentGeneratorConfig to prevent getModel() from returning
     // the previous session's model (which might be Flash)
@@ -241,8 +247,16 @@ export class Config {
     const contentConfig = await createContentGeneratorConfig(
       modelToUse,
       authMethod,
-      this,
+      // We intentionally omit passing the current Config instance here so that
+      // createContentGeneratorConfig does not fall back to the previous model
+      // via config.getModel().
+      undefined,
     );
+
+    // Update embedding model based on auth type
+    if (authMethod === AuthType.USE_OPENAI) {
+      this.embeddingModel = DEFAULT_OPENAI_EMBEDDING_MODEL;
+    }
 
     const gc = new GeminiClient(this);
     this.geminiClient = gc;

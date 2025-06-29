@@ -35,5 +35,11 @@ export const validateAuthMethod = (authMethod: string): string | null => {
     return null;
   }
 
+  if (authMethod === AuthType.USE_OPENAI) {
+    // OpenAI API key is optional if using a local endpoint
+    // Base URL can be set via OPENAI_BASE_URL env var
+    return null;
+  }
+
   return 'Invalid auth method selected.';
 };

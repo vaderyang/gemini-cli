@@ -14,8 +14,9 @@ import {
   GoogleGenAI,
 } from '@google/genai';
 import { createCodeAssistContentGenerator } from '../code_assist/codeAssist.js';
-import { DEFAULT_GEMINI_MODEL } from '../config/models.js';
+import { DEFAULT_GEMINI_MODEL, DEFAULT_OPENAI_MODEL } from '../config/models.js';
 import { getEffectiveModel } from './modelCheck.js';
+import { OpenAIContentGenerator } from '../openai/openaiContentGenerator.js';
 
 /**
  * Interface abstracting the core functionalities for generating content and counting tokens.
@@ -38,6 +39,7 @@ export enum AuthType {
   LOGIN_WITH_GOOGLE_PERSONAL = 'oauth-personal',
   USE_GEMINI = 'gemini-api-key',
   USE_VERTEX_AI = 'vertex-ai',
+  USE_OPENAI = 'openai',
 }
 
 export type ContentGeneratorConfig = {
@@ -45,6 +47,7 @@ export type ContentGeneratorConfig = {
   apiKey?: string;
   vertexai?: boolean;
   authType?: AuthType | undefined;
+  openaiBaseUrl?: string;
 };
 
 export async function createContentGeneratorConfig(
@@ -56,9 +59,12 @@ export async function createContentGeneratorConfig(
   const googleApiKey = process.env.GOOGLE_API_KEY;
   const googleCloudProject = process.env.GOOGLE_CLOUD_PROJECT;
   const googleCloudLocation = process.env.GOOGLE_CLOUD_LOCATION;
+  const openaiApiKey = process.env.OPENAI_API_KEY;
+  const openaiBaseUrl = process.env.OPENAI_BASE_URL;
 
   // Use runtime model from config if available, otherwise fallback to parameter or default
-  const effectiveModel = config?.getModel?.() || model || DEFAULT_GEMINI_MODEL;
+  const defaultModel = authType === AuthType.USE_OPENAI ? DEFAULT_OPENAI_MODEL : DEFAULT_GEMINI_MODEL;
+  const effectiveModel = config?.getModel?.() || model || defaultModel;
 
   const contentGeneratorConfig: ContentGeneratorConfig = {
     model: effectiveModel,
@@ -96,6 +102,13 @@ export async function createContentGeneratorConfig(
     return contentGeneratorConfig;
   }
 
+  if (authType === AuthType.USE_OPENAI) {
+    contentGeneratorConfig.apiKey = openaiApiKey;
+    contentGeneratorConfig.openaiBaseUrl = openaiBaseUrl;
+    // For OpenAI, we'll use the model as-is (e.g., gpt-4, gpt-3.5-turbo)
+    return contentGeneratorConfig;
+  }
+
   return contentGeneratorConfig;
 }
 
@@ -123,6 +136,12 @@ export async function createContentGenerator(
     });
 
     return googleGenAI.models;
+  }
+
+  if (config.authType === AuthType.USE_OPENAI) {
+    const baseURL = config.openaiBaseUrl || process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1';
+    const apiKey = config.apiKey || process.env.OPENAI_API_KEY;
+    return new OpenAIContentGenerator(apiKey, baseURL, httpOptions);
   }
 
   throw new Error(

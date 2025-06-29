@@ -285,8 +285,6 @@ const App = ({ config, settings, startupWarnings = [] }: AppProps) => {
     setQuittingMessages,
     openPrivacyNotice,
   );
-  const pendingHistoryItems = [...pendingSlashCommandHistoryItems];
-
   const { rows: terminalHeight, columns: terminalWidth } = useTerminalSize();
   const isInitialMount = useRef(true);
   const { stdin, setRawMode } = useStdin();
@@ -421,7 +419,12 @@ const App = ({ config, settings, startupWarnings = [] }: AppProps) => {
     onAuthError,
     performMemoryRefresh,
   );
-  pendingHistoryItems.push(...pendingGeminiHistoryItems);
+  
+  // Combine pending history items without mutation
+  const allPendingHistoryItems = useMemo(() => {
+    return [...pendingSlashCommandHistoryItems, ...pendingGeminiHistoryItems];
+  }, [pendingSlashCommandHistoryItems, pendingGeminiHistoryItems]);
+  
   const { elapsedTime, currentLoadingPhrase } =
     useLoadingIndicator(streamingState);
   const showAutoAcceptIndicator = useAutoAcceptIndicator({ config });
@@ -603,7 +606,7 @@ const App = ({ config, settings, startupWarnings = [] }: AppProps) => {
         </Static>
         <OverflowProvider>
           <Box ref={pendingHistoryItemRef} flexDirection="column">
-            {pendingHistoryItems.map((item, i) => (
+            {allPendingHistoryItems.map((item, i) => (
               <HistoryItemDisplay
                 key={i}
                 availableTerminalHeight={
